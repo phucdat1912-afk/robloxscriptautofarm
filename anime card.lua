@@ -106,10 +106,6 @@ Gui.ResetOnSpawn = false
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = CoreGui
 
---==================================================
--- MAIN
---==================================================
-
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 600, 0, 380)
 Main.Position = UDim2.new(0.5, -300, 0.5, -190)
@@ -510,16 +506,20 @@ local function RefreshLogs()
 
 end
 
+--==================================================
+-- AUTO CLEAR AFTER 8 LOGS
+--==================================================
+
 local function AddLog(text)
+
+    if #Logs >= 8 then
+        table.clear(Logs)
+    end
 
     table.insert(
         Logs,
         os.date("%H:%M:%S") .. " | " .. tostring(text)
     )
-
-    while #Logs > 5 do
-        table.remove(Logs, 1)
-    end
 
     RefreshLogs()
 
@@ -556,19 +556,12 @@ end
 local function BuyAndRoll()
 
     local success, result = pcall(function()
-
         return RequestConveyorOffer:InvokeServer(1)
-
     end)
 
     if not success or typeof(result) ~= "table" then
-
-        AddLog(
-            "ERROR: Không lấy được offer"
-        )
-
+        AddLog("ERROR: Không lấy được offer")
         return
-
     end
 
     for _, offer in pairs(result) do
@@ -621,10 +614,7 @@ local function BuyAndRoll()
                     buyError
                 )
 
-                AddLog(
-                    "ERROR: BuyPack"
-                )
-
+                AddLog("ERROR: BuyPack")
                 return
 
             end
@@ -651,9 +641,7 @@ local function BuyAndRoll()
                     rollError
                 )
 
-                AddLog(
-                    "ERROR: SetRecoverPack"
-                )
+                AddLog("ERROR: SetRecoverPack")
 
             else
 
@@ -673,14 +661,10 @@ local function BuyAndRoll()
             end
 
             return
-
         end
-
     end
 
-    AddLog(
-        "Skipped: Pack không được chọn"
-    )
+    AddLog("Skip")
 
 end
 
@@ -835,6 +819,7 @@ Player.Idled:Connect(function()
     end
 
     VirtualUser:CaptureController()
+
     VirtualUser:ClickButton2(
         Vector2.new(0, 0)
     )
@@ -842,7 +827,7 @@ Player.Idled:Connect(function()
 end)
 
 --==================================================
--- CLEAR LOGS
+-- CLEAR LOGS BUTTON
 --==================================================
 
 ClearLogsButton.MouseButton1Click:Connect(function()
@@ -922,5 +907,4 @@ end)
 UpdatePackButtons()
 UpdateDelay()
 SelectTab("Farm")
-
 AddLog("1tap Pack Farm loaded")
