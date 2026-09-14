@@ -50,6 +50,7 @@ local dragStart
 local startPos
 
 local function updateDrag(input)
+
     local delta = input.Position - dragStart
 
     Main.Position = UDim2.new(
@@ -58,6 +59,7 @@ local function updateDrag(input)
         startPos.Y.Scale,
         startPos.Y.Offset + delta.Y
     )
+
 end
 
 Main.InputBegan:Connect(function(input)
@@ -200,15 +202,19 @@ DelayBox.FocusLost:Connect(function()
     local value = tonumber(DelayBox.Text)
 
     if value and value >= 0 then
+
         Delay = value
+
     else
+
         DelayBox.Text = tostring(Delay)
+
     end
 
 end)
 
 --==================================================
--- LOG FRAME
+-- LOG TITLE
 --==================================================
 
 local LogTitle = Instance.new("TextLabel")
@@ -222,8 +228,12 @@ LogTitle.Font = Enum.Font.GothamBold
 LogTitle.TextXAlignment = Enum.TextXAlignment.Left
 LogTitle.Parent = Main
 
+--==================================================
+-- LOG FRAME
+--==================================================
+
 local LogFrame = Instance.new("ScrollingFrame")
-LogFrame.Size = UDim2.new(1, -20, 0, 115)
+LogFrame.Size = UDim2.new(1, -20, 0, 90)
 LogFrame.Position = UDim2.new(0, 10, 0, 228)
 LogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 LogFrame.BorderSizePixel = 0
@@ -236,6 +246,10 @@ LogFrame.Parent = Main
 local LogCorner = Instance.new("UICorner")
 LogCorner.CornerRadius = UDim.new(0, 7)
 LogCorner.Parent = LogFrame
+
+--==================================================
+-- LOG TEXT
+--==================================================
 
 local LogText = Instance.new("TextLabel")
 LogText.Size = UDim2.new(1, -10, 0, 0)
@@ -252,12 +266,29 @@ LogText.AutomaticSize = Enum.AutomaticSize.Y
 LogText.Parent = LogFrame
 
 --==================================================
+-- CLEAR LOG BUTTON
+--==================================================
+
+local ClearLogButton = Instance.new("TextButton")
+ClearLogButton.Size = UDim2.new(1, -20, 0, 30)
+ClearLogButton.Position = UDim2.new(0, 10, 0, 325)
+ClearLogButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+ClearLogButton.Text = "CLEAR LOG"
+ClearLogButton.TextColor3 = Color3.new(1, 1, 1)
+ClearLogButton.TextSize = 13
+ClearLogButton.Font = Enum.Font.GothamBold
+ClearLogButton.Parent = Main
+
+local ClearLogCorner = Instance.new("UICorner")
+ClearLogCorner.CornerRadius = UDim.new(0, 7)
+ClearLogCorner.Parent = ClearLogButton
+
+--==================================================
 -- LOG SYSTEM
 --==================================================
 
 local Logs = {}
 
--- Chỉ giữ tối đa 5 log
 local MAX_LOGS = 5
 
 local function RefreshLog()
@@ -287,6 +318,26 @@ local function RefreshLog()
 
 end
 
+local function ClearLogs()
+
+    table.clear(Logs)
+
+    LogText.Text = ""
+
+    LogFrame.CanvasSize = UDim2.new(
+        0,
+        0,
+        0,
+        0
+    )
+
+    LogFrame.CanvasPosition = Vector2.new(
+        0,
+        0
+    )
+
+end
+
 local function AddLog(message)
 
     local time = os.date("%H:%M:%S")
@@ -297,36 +348,34 @@ local function AddLog(message)
         tostring(message)
     )
 
-    --==============================================
-    -- LOG THỨ 6 -> CLEAR TOÀN BỘ
-    --==============================================
+    --==================================================
+    -- ĐỦ 5 LOG -> CLEAR
+    --==================================================
 
     if #Logs >= MAX_LOGS then
 
-        table.clear(Logs)
-
-        LogText.Text = ""
-
-        LogFrame.CanvasSize = UDim2.new(
-            0,
-            0,
-            0,
-            0
-        )
-
-        LogFrame.CanvasPosition = Vector2.new(
-            0,
-            0
-        )
+        ClearLogs()
 
     end
 
-    -- Thêm log mới
-    table.insert(Logs, line)
+    table.insert(
+        Logs,
+        line
+    )
 
     RefreshLog()
 
 end
+
+--==================================================
+-- MANUAL CLEAR
+--==================================================
+
+ClearLogButton.MouseButton1Click:Connect(function()
+
+    ClearLogs()
+
+end)
 
 --==================================================
 -- PACK TOGGLE
@@ -388,7 +437,9 @@ local function BuyAndRoll()
 
     if not success or typeof(result) ~= "table" then
 
-        AddLog("ERROR: Không lấy được offer")
+        AddLog(
+            "ERROR: Không lấy được offer"
+        )
 
         return
 
@@ -444,7 +495,9 @@ local function BuyAndRoll()
                     buyError
                 )
 
-                AddLog("ERROR: BuyPack")
+                AddLog(
+                    "ERROR: BuyPack"
+                )
 
                 return
 
@@ -472,7 +525,9 @@ local function BuyAndRoll()
                     rollError
                 )
 
-                AddLog("ERROR: SetRecoverPack")
+                AddLog(
+                    "ERROR: SetRecoverPack"
+                )
 
             else
 
