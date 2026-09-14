@@ -22,7 +22,7 @@ local AllowedPacks = {
 }
 
 --==================================================
--- UI
+-- GUI
 --==================================================
 
 local Gui = Instance.new("ScreenGui")
@@ -37,12 +37,26 @@ Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Main.BorderSizePixel = 0
 Main.Parent = Gui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 10)
-Corner.Parent = Main
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = Main
 
 --==================================================
--- DRAG
+-- TITLE
+--==================================================
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Pack Auto Farm"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Main
+
+--==================================================
+-- DRAG - TITLE ONLY
 --==================================================
 
 local dragging = false
@@ -60,7 +74,8 @@ local function updateDrag(input)
     )
 end
 
-Main.InputBegan:Connect(function(input)
+Title.InputBegan:Connect(function(input)
+
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
 
@@ -68,35 +83,33 @@ Main.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = Main.Position
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
     end
+
+end)
+
+Title.InputEnded:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = false
+
+    end
+
 end)
 
 UserInputService.InputChanged:Connect(function(input)
+
     if dragging and (
         input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch
     ) then
+
         updateDrag(input)
+
     end
+
 end)
-
---==================================================
--- TITLE
---==================================================
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "Pack Auto Farm"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 20
-Title.Font = Enum.Font.GothamBold
-Title.Parent = Main
 
 --==================================================
 -- STATUS
@@ -187,6 +200,7 @@ DelayCorner.CornerRadius = UDim.new(0, 7)
 DelayCorner.Parent = DelayBox
 
 DelayBox.FocusLost:Connect(function()
+
     local value = tonumber(DelayBox.Text)
 
     if value and value >= 0 then
@@ -194,10 +208,11 @@ DelayBox.FocusLost:Connect(function()
     else
         DelayBox.Text = tostring(Delay)
     end
+
 end)
 
 --==================================================
--- LOG FRAME
+-- LOG TITLE
 --==================================================
 
 local LogTitle = Instance.new("TextLabel")
@@ -211,20 +226,33 @@ LogTitle.Font = Enum.Font.GothamBold
 LogTitle.TextXAlignment = Enum.TextXAlignment.Left
 LogTitle.Parent = Main
 
+--==================================================
+-- LOG FRAME
+--==================================================
+
 local LogFrame = Instance.new("ScrollingFrame")
 LogFrame.Size = UDim2.new(1, -20, 0, 135)
 LogFrame.Position = UDim2.new(0, 10, 0, 228)
 LogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 LogFrame.BorderSizePixel = 0
-LogFrame.ScrollBarThickness = 7
-LogFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-LogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+-- สำคัญสำหรับ Mobile
 LogFrame.Active = true
+LogFrame.Selectable = true
+LogFrame.ScrollingEnabled = true
+LogFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+LogFrame.ScrollBarThickness = 8
+LogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
 LogFrame.Parent = Main
 
 local LogCorner = Instance.new("UICorner")
 LogCorner.CornerRadius = UDim.new(0, 7)
 LogCorner.Parent = LogFrame
+
+--==================================================
+-- LOG TEXT
+--==================================================
 
 local LogText = Instance.new("TextLabel")
 LogText.Size = UDim2.new(1, -10, 0, 0)
@@ -248,9 +276,11 @@ local Logs = {}
 local MAX_LOGS = 50
 
 local function RefreshLog()
+
     LogText.Text = table.concat(Logs, "\n")
 
     task.defer(function()
+
         local height = LogText.AbsoluteSize.Y + 10
 
         LogFrame.CanvasSize = UDim2.new(
@@ -260,15 +290,21 @@ local function RefreshLog()
             height
         )
 
-        -- Tự động kéo xuống log mới nhất
+        -- Auto scroll ไปยัง log ล่าสุด
         LogFrame.CanvasPosition = Vector2.new(
             0,
-            math.max(0, height - LogFrame.AbsoluteSize.Y)
+            math.max(
+                0,
+                height - LogFrame.AbsoluteSize.Y
+            )
         )
+
     end)
+
 end
 
 local function AddLog(message)
+
     local time = os.date("%H:%M:%S")
 
     local line = string.format(
@@ -277,7 +313,7 @@ local function AddLog(message)
         tostring(message)
     )
 
-    -- Đủ 50 log thì tự động clear
+    -- Đủ 50 log thì clear toàn bộ
     if #Logs >= MAX_LOGS then
         table.clear(Logs)
     end
@@ -285,6 +321,7 @@ local function AddLog(message)
     table.insert(Logs, line)
 
     RefreshLog()
+
 end
 
 --==================================================
@@ -292,27 +329,45 @@ end
 --==================================================
 
 HSR.MouseButton1Click:Connect(function()
-    AllowedPacks["HSR Pack"] = not AllowedPacks["HSR Pack"]
+
+    AllowedPacks["HSR Pack"] =
+        not AllowedPacks["HSR Pack"]
 
     if AllowedPacks["HSR Pack"] then
+
         HSR.Text = "HSR: ON"
-        HSR.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
+        HSR.BackgroundColor3 =
+            Color3.fromRGB(50, 150, 80)
+
     else
+
         HSR.Text = "HSR: OFF"
-        HSR.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        HSR.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
+
     end
+
 end)
 
 Eternity.MouseButton1Click:Connect(function()
-    AllowedPacks["Eternity Pack"] = not AllowedPacks["Eternity Pack"]
+
+    AllowedPacks["Eternity Pack"] =
+        not AllowedPacks["Eternity Pack"]
 
     if AllowedPacks["Eternity Pack"] then
+
         Eternity.Text = "Eternity: ON"
-        Eternity.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
+        Eternity.BackgroundColor3 =
+            Color3.fromRGB(50, 150, 80)
+
     else
+
         Eternity.Text = "Eternity: OFF"
-        Eternity.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        Eternity.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
+
     end
+
 end)
 
 --==================================================
@@ -320,13 +375,19 @@ end)
 --==================================================
 
 local function BuyAndRoll()
+
     local success, result = pcall(function()
+
         return RequestConveyorOffer:InvokeServer(1)
+
     end)
 
     if not success or typeof(result) ~= "table" then
+
         AddLog("ERROR: Không lấy được offer")
+
         return
+
     end
 
     for _, offer in pairs(result) do
@@ -339,7 +400,12 @@ local function BuyAndRoll()
         local packName = offer.PackName
         local mutation = offer.Mutation
 
-        print("Offer:", packName, mutation, offerId)
+        print(
+            "Offer:",
+            packName,
+            mutation,
+            offerId
+        )
 
         AddLog(
             "Offer: "
@@ -358,17 +424,26 @@ local function BuyAndRoll()
             )
 
             local buySuccess, buyError = pcall(function()
+
                 BuyPack:FireServer(
                     packName,
                     mutation,
                     offerId
                 )
+
             end)
 
             if not buySuccess then
-                warn("BuyPack lỗi:", buyError)
+
+                warn(
+                    "BuyPack lỗi:",
+                    buyError
+                )
+
                 AddLog("ERROR: BuyPack")
+
                 return
+
             end
 
             AddLog(
@@ -379,13 +454,26 @@ local function BuyAndRoll()
             task.wait(0.5)
 
             local rollSuccess, rollError = pcall(function()
-                SetRecoverPack:FireServer(offerId)
+
+                SetRecoverPack:FireServer(
+                    offerId
+                )
+
             end)
 
             if not rollSuccess then
-                warn("SetRecoverPack lỗi:", rollError)
-                AddLog("ERROR: SetRecoverPack")
+
+                warn(
+                    "SetRecoverPack lỗi:",
+                    rollError
+                )
+
+                AddLog(
+                    "ERROR: SetRecoverPack"
+                )
+
             else
+
                 print(
                     "Đã Roll:",
                     packName,
@@ -398,30 +486,43 @@ local function BuyAndRoll()
                     .. " | "
                     .. tostring(mutation)
                 )
+
             end
 
             return
+
         end
+
     end
 
-    AddLog("Skipped: Pack không được chọn")
+    AddLog(
+        "Skipped: Pack không được chọn"
+    )
+
 end
 
 --==================================================
--- LOOP
+-- AUTO LOOP
 --==================================================
 
 task.spawn(function()
+
     while true do
 
         if Running then
+
             BuyAndRoll()
+
             task.wait(Delay)
+
         else
+
             task.wait(0.2)
+
         end
 
     end
+
 end)
 
 --==================================================
@@ -435,22 +536,34 @@ Toggle.MouseButton1Click:Connect(function()
     if Running then
 
         Toggle.Text = "STOP"
-        Toggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+
+        Toggle.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
 
         Status.Text = "Status: RUNNING"
-        Status.TextColor3 = Color3.fromRGB(80, 255, 100)
 
-        AddLog("Auto Farm STARTED")
+        Status.TextColor3 =
+            Color3.fromRGB(80, 255, 100)
+
+        AddLog(
+            "Auto Farm STARTED"
+        )
 
     else
 
         Toggle.Text = "START"
-        Toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+        Toggle.BackgroundColor3 =
+            Color3.fromRGB(45, 45, 45)
 
         Status.Text = "Status: OFF"
-        Status.TextColor3 = Color3.fromRGB(255, 80, 80)
 
-        AddLog("Auto Farm STOPPED")
+        Status.TextColor3 =
+            Color3.fromRGB(255, 80, 80)
+
+        AddLog(
+            "Auto Farm STOPPED"
+        )
 
     end
 
