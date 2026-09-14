@@ -31,8 +31,8 @@ Gui.ResetOnSpawn = false
 Gui.Parent = game:GetService("CoreGui")
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 320, 0, 365)
-Main.Position = UDim2.new(0.5, -160, 0.5, -182)
+Main.Size = UDim2.new(0, 320, 0, 380)
+Main.Position = UDim2.new(0.5, -160, 0.5, -190)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Main.BorderSizePixel = 0
 Main.Parent = Gui
@@ -212,12 +212,14 @@ LogTitle.TextXAlignment = Enum.TextXAlignment.Left
 LogTitle.Parent = Main
 
 local LogFrame = Instance.new("ScrollingFrame")
-LogFrame.Size = UDim2.new(1, -20, 0, 115)
+LogFrame.Size = UDim2.new(1, -20, 0, 135)
 LogFrame.Position = UDim2.new(0, 10, 0, 228)
 LogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 LogFrame.BorderSizePixel = 0
-LogFrame.ScrollBarThickness = 5
+LogFrame.ScrollBarThickness = 7
+LogFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 LogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+LogFrame.Active = true
 LogFrame.Parent = Main
 
 local LogCorner = Instance.new("UICorner")
@@ -228,7 +230,7 @@ local LogText = Instance.new("TextLabel")
 LogText.Size = UDim2.new(1, -10, 0, 0)
 LogText.Position = UDim2.new(0, 5, 0, 5)
 LogText.BackgroundTransparency = 1
-LogText.Text = "=== LOG ==="
+LogText.Text = ""
 LogText.TextColor3 = Color3.new(1, 1, 1)
 LogText.TextSize = 12
 LogText.Font = Enum.Font.Code
@@ -238,26 +240,51 @@ LogText.TextWrapped = true
 LogText.AutomaticSize = Enum.AutomaticSize.Y
 LogText.Parent = LogFrame
 
-local function AddLog(message)
-    local time = os.date("%H:%M:%S")
+--==================================================
+-- LOG SYSTEM
+--==================================================
 
-    LogText.Text =
-        LogText.Text
-        .. "\n[" .. time .. "] " .. tostring(message)
+local Logs = {}
+local MAX_LOGS = 50
+
+local function RefreshLog()
+    LogText.Text = table.concat(Logs, "\n")
 
     task.defer(function()
+        local height = LogText.AbsoluteSize.Y + 10
+
         LogFrame.CanvasSize = UDim2.new(
             0,
             0,
             0,
-            LogText.AbsoluteSize.Y + 10
+            height
         )
 
+        -- Tự động kéo xuống log mới nhất
         LogFrame.CanvasPosition = Vector2.new(
             0,
-            math.max(0, LogText.AbsoluteSize.Y)
+            math.max(0, height - LogFrame.AbsoluteSize.Y)
         )
     end)
+end
+
+local function AddLog(message)
+    local time = os.date("%H:%M:%S")
+
+    local line = string.format(
+        "[%s] %s",
+        time,
+        tostring(message)
+    )
+
+    -- Đủ 50 log thì tự động clear
+    if #Logs >= MAX_LOGS then
+        table.clear(Logs)
+    end
+
+    table.insert(Logs, line)
+
+    RefreshLog()
 end
 
 --==================================================
@@ -344,7 +371,10 @@ local function BuyAndRoll()
                 return
             end
 
-            AddLog("Bought: " .. tostring(packName))
+            AddLog(
+                "Bought: "
+                .. tostring(packName)
+            )
 
             task.wait(0.5)
 
@@ -356,7 +386,11 @@ local function BuyAndRoll()
                 warn("SetRecoverPack lỗi:", rollError)
                 AddLog("ERROR: SetRecoverPack")
             else
-                print("Đã Roll:", packName, offerId)
+                print(
+                    "Đã Roll:",
+                    packName,
+                    offerId
+                )
 
                 AddLog(
                     "ROLLED: "
@@ -399,6 +433,7 @@ Toggle.MouseButton1Click:Connect(function()
     Running = not Running
 
     if Running then
+
         Toggle.Text = "STOP"
         Toggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
 
@@ -406,7 +441,9 @@ Toggle.MouseButton1Click:Connect(function()
         Status.TextColor3 = Color3.fromRGB(80, 255, 100)
 
         AddLog("Auto Farm STARTED")
+
     else
+
         Toggle.Text = "START"
         Toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 
@@ -414,6 +451,7 @@ Toggle.MouseButton1Click:Connect(function()
         Status.TextColor3 = Color3.fromRGB(255, 80, 80)
 
         AddLog("Auto Farm STOPPED")
+
     end
 
 end)
