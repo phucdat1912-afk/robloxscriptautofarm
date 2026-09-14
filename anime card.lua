@@ -61,6 +61,7 @@ local function updateDrag(input)
 end
 
 Main.InputBegan:Connect(function(input)
+
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
 
@@ -69,20 +70,28 @@ Main.InputBegan:Connect(function(input)
         startPos = Main.Position
 
         input.Changed:Connect(function()
+
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
             end
+
         end)
+
     end
+
 end)
 
 UserInputService.InputChanged:Connect(function(input)
+
     if dragging and (
         input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch
     ) then
+
         updateDrag(input)
+
     end
+
 end)
 
 --==================================================
@@ -187,6 +196,7 @@ DelayCorner.CornerRadius = UDim.new(0, 7)
 DelayCorner.Parent = DelayBox
 
 DelayBox.FocusLost:Connect(function()
+
     local value = tonumber(DelayBox.Text)
 
     if value and value >= 0 then
@@ -194,6 +204,7 @@ DelayBox.FocusLost:Connect(function()
     else
         DelayBox.Text = tostring(Delay)
     end
+
 end)
 
 --==================================================
@@ -217,7 +228,9 @@ LogFrame.Position = UDim2.new(0, 10, 0, 228)
 LogFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 LogFrame.BorderSizePixel = 0
 LogFrame.ScrollBarThickness = 5
+LogFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 LogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+LogFrame.Active = true
 LogFrame.Parent = Main
 
 local LogCorner = Instance.new("UICorner")
@@ -228,7 +241,7 @@ local LogText = Instance.new("TextLabel")
 LogText.Size = UDim2.new(1, -10, 0, 0)
 LogText.Position = UDim2.new(0, 5, 0, 5)
 LogText.BackgroundTransparency = 1
-LogText.Text = "=== LOG ==="
+LogText.Text = ""
 LogText.TextColor3 = Color3.new(1, 1, 1)
 LogText.TextSize = 12
 LogText.Font = Enum.Font.Code
@@ -238,26 +251,81 @@ LogText.TextWrapped = true
 LogText.AutomaticSize = Enum.AutomaticSize.Y
 LogText.Parent = LogFrame
 
-local function AddLog(message)
-    local time = os.date("%H:%M:%S")
+--==================================================
+-- LOG SYSTEM
+--==================================================
 
-    LogText.Text =
-        LogText.Text
-        .. "\n[" .. time .. "] " .. tostring(message)
+local Logs = {}
+
+-- Chỉ giữ tối đa 5 log
+local MAX_LOGS = 5
+
+local function RefreshLog()
+
+    LogText.Text = table.concat(Logs, "\n")
 
     task.defer(function()
+
+        local height = LogText.AbsoluteSize.Y + 10
+
         LogFrame.CanvasSize = UDim2.new(
             0,
             0,
             0,
-            LogText.AbsoluteSize.Y + 10
+            height
         )
 
         LogFrame.CanvasPosition = Vector2.new(
             0,
-            math.max(0, LogText.AbsoluteSize.Y)
+            math.max(
+                0,
+                height - LogFrame.AbsoluteSize.Y
+            )
         )
+
     end)
+
+end
+
+local function AddLog(message)
+
+    local time = os.date("%H:%M:%S")
+
+    local line = string.format(
+        "[%s] %s",
+        time,
+        tostring(message)
+    )
+
+    --==============================================
+    -- LOG THỨ 6 -> CLEAR TOÀN BỘ
+    --==============================================
+
+    if #Logs >= MAX_LOGS then
+
+        table.clear(Logs)
+
+        LogText.Text = ""
+
+        LogFrame.CanvasSize = UDim2.new(
+            0,
+            0,
+            0,
+            0
+        )
+
+        LogFrame.CanvasPosition = Vector2.new(
+            0,
+            0
+        )
+
+    end
+
+    -- Thêm log mới
+    table.insert(Logs, line)
+
+    RefreshLog()
+
 end
 
 --==================================================
@@ -265,27 +333,45 @@ end
 --==================================================
 
 HSR.MouseButton1Click:Connect(function()
-    AllowedPacks["HSR Pack"] = not AllowedPacks["HSR Pack"]
+
+    AllowedPacks["HSR Pack"] =
+        not AllowedPacks["HSR Pack"]
 
     if AllowedPacks["HSR Pack"] then
+
         HSR.Text = "HSR: ON"
-        HSR.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
+        HSR.BackgroundColor3 =
+            Color3.fromRGB(50, 150, 80)
+
     else
+
         HSR.Text = "HSR: OFF"
-        HSR.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        HSR.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
+
     end
+
 end)
 
 Eternity.MouseButton1Click:Connect(function()
-    AllowedPacks["Eternity Pack"] = not AllowedPacks["Eternity Pack"]
+
+    AllowedPacks["Eternity Pack"] =
+        not AllowedPacks["Eternity Pack"]
 
     if AllowedPacks["Eternity Pack"] then
+
         Eternity.Text = "Eternity: ON"
-        Eternity.BackgroundColor3 = Color3.fromRGB(50, 150, 80)
+        Eternity.BackgroundColor3 =
+            Color3.fromRGB(50, 150, 80)
+
     else
+
         Eternity.Text = "Eternity: OFF"
-        Eternity.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        Eternity.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
+
     end
+
 end)
 
 --==================================================
@@ -293,13 +379,19 @@ end)
 --==================================================
 
 local function BuyAndRoll()
+
     local success, result = pcall(function()
+
         return RequestConveyorOffer:InvokeServer(1)
+
     end)
 
     if not success or typeof(result) ~= "table" then
+
         AddLog("ERROR: Không lấy được offer")
+
         return
+
     end
 
     for _, offer in pairs(result) do
@@ -312,7 +404,12 @@ local function BuyAndRoll()
         local packName = offer.PackName
         local mutation = offer.Mutation
 
-        print("Offer:", packName, mutation, offerId)
+        print(
+            "Offer:",
+            packName,
+            mutation,
+            offerId
+        )
 
         AddLog(
             "Offer: "
@@ -331,32 +428,59 @@ local function BuyAndRoll()
             )
 
             local buySuccess, buyError = pcall(function()
+
                 BuyPack:FireServer(
                     packName,
                     mutation,
                     offerId
                 )
+
             end)
 
             if not buySuccess then
-                warn("BuyPack lỗi:", buyError)
+
+                warn(
+                    "BuyPack lỗi:",
+                    buyError
+                )
+
                 AddLog("ERROR: BuyPack")
+
                 return
+
             end
 
-            AddLog("Bought: " .. tostring(packName))
+            AddLog(
+                "Bought: "
+                .. tostring(packName)
+            )
 
             task.wait(0.5)
 
             local rollSuccess, rollError = pcall(function()
-                SetRecoverPack:FireServer(offerId)
+
+                SetRecoverPack:FireServer(
+                    offerId
+                )
+
             end)
 
             if not rollSuccess then
-                warn("SetRecoverPack lỗi:", rollError)
+
+                warn(
+                    "SetRecoverPack lỗi:",
+                    rollError
+                )
+
                 AddLog("ERROR: SetRecoverPack")
+
             else
-                print("Đã Roll:", packName, offerId)
+
+                print(
+                    "Đã Roll:",
+                    packName,
+                    offerId
+                )
 
                 AddLog(
                     "ROLLED: "
@@ -364,13 +488,19 @@ local function BuyAndRoll()
                     .. " | "
                     .. tostring(mutation)
                 )
+
             end
 
             return
+
         end
+
     end
 
-    AddLog("Skipped: Pack không được chọn")
+    AddLog(
+        "Skipped: Pack không được chọn"
+    )
+
 end
 
 --==================================================
@@ -378,16 +508,23 @@ end
 --==================================================
 
 task.spawn(function()
+
     while true do
 
         if Running then
+
             BuyAndRoll()
+
             task.wait(Delay)
+
         else
+
             task.wait(0.2)
+
         end
 
     end
+
 end)
 
 --==================================================
@@ -399,21 +536,37 @@ Toggle.MouseButton1Click:Connect(function()
     Running = not Running
 
     if Running then
+
         Toggle.Text = "STOP"
-        Toggle.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+
+        Toggle.BackgroundColor3 =
+            Color3.fromRGB(150, 50, 50)
 
         Status.Text = "Status: RUNNING"
-        Status.TextColor3 = Color3.fromRGB(80, 255, 100)
 
-        AddLog("Auto Farm STARTED")
+        Status.TextColor3 =
+            Color3.fromRGB(80, 255, 100)
+
+        AddLog(
+            "Auto Farm STARTED"
+        )
+
     else
+
         Toggle.Text = "START"
-        Toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+        Toggle.BackgroundColor3 =
+            Color3.fromRGB(45, 45, 45)
 
         Status.Text = "Status: OFF"
-        Status.TextColor3 = Color3.fromRGB(255, 80, 80)
 
-        AddLog("Auto Farm STOPPED")
+        Status.TextColor3 =
+            Color3.fromRGB(255, 80, 80)
+
+        AddLog(
+            "Auto Farm STOPPED"
+        )
+
     end
 
 end)
