@@ -1452,9 +1452,7 @@ local function BuyAndRoll()
     local OfferCount = 1
 
     if ToggleStates["Event 2 Pack"] then
-
         OfferCount = 2
-
     end
 
     local Success, Result =
@@ -1474,7 +1472,6 @@ local function BuyAndRoll()
         )
 
         return
-
     end
 
     if typeof(Result) ~= "table" then
@@ -1500,8 +1497,14 @@ local function BuyAndRoll()
             continue
         end
 
+        --==================================================
+        -- CHECK PACK
+        --==================================================
+
         if AllowedPacks[PackName]
             and ToggleStates[PackName] then
+
+            -- SELECTED PACK -> BUY
 
             AddLog(
                 "Buying: " ..
@@ -1544,6 +1547,17 @@ local function BuyAndRoll()
                 )
 
             end
+
+        else
+
+            --==================================================
+            -- SKIPPED PACK
+            --==================================================
+
+            AddLog(
+                "SKIP: " ..
+                tostring(PackName)
+            )
 
         end
 
